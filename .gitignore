@@ -1,3 +1,16 @@
+# tfcdk ignores
+*.d.ts
+*.js
+cdktf.out
+cdktf.log
+*terraform.*.tfstate*
+terraform.tfvars
+.gen
+.terraform
+tsconfig.tsbuildinfo
+!jest.config.js
+!setup.js
+
 # Logs
 logs
 *.log
