@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`My CDKTF Application Unit testing using snapshots Tests the snapshot 1`] = `
+"{
+  "data": {
+    "azurerm_resource_group": {
+      "rg": {
+        "name": "\${var.rgName}"
+      }
+    }
+  },
+  "resource": {
+    "azurerm_container_registry": {
+      "acr": {
+        "location": "westus2",
+        "name": "\${var.acrName}",
+        "resource_group_name": "\${data.azurerm_resource_group.rg.name}",
+        "sku": "Premium"
+      }
+    },
+    "azurerm_container_registry_agent_pool": {
+      "acrAgentPool": {
+        "container_registry_name": "\${azurerm_container_registry.acr.name}",
+        "location": "westus2",
+        "name": "test-agent-pool",
+        "resource_group_name": "\${data.azurerm_resource_group.rg.name}",
+        "virtual_network_subnet_id": "\${azurerm_subnet.subnet.id}"
+      }
+    },
+    "azurerm_subnet": {
+      "subnet": {
+        "address_prefixes": [
+          "10.0.0.0/24"
+        ],
+        "name": "acr-subnet",
+        "resource_group_name": "\${data.azurerm_resource_group.rg.name}",
+        "virtual_network_name": "\${azurerm_virtual_network.vnet.name}"
+      }
+    },
+    "azurerm_virtual_network": {
+      "vnet": {
+        "address_space": [
+          "10.0.0.0/16"
+        ],
+        "location": "westus2",
+        "name": "acr-vnet",
+        "resource_group_name": "\${data.azurerm_resource_group.rg.name}"
+      }
+    }
+  },
+  "variable": {
+    "acrName": {
+      "description": "Name of the created ACR repo. Has to be unique and can't container anything else than alphanumeric characters",
+      "nullable": false,
+      "type": "string"
+    },
+    "rgName": {
+      "description": "Name of the resource group resources are going to be created to",
+      "nullable": false,
+      "type": "string"
+    }
+  }
+}"
+`;
