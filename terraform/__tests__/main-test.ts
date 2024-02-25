@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { Testing } from "cdktf";
 import "cdktf/lib/testing/adapters/jest"; // Load types for expect matchers
-import { MyStack } from "../main";
+import { AutoScalingStack, MyStack } from "../main";
 // import { Testing } from "cdktf";
 
 describe("My CDKTF Application", () => {
@@ -27,8 +27,8 @@ describe("My CDKTF Application", () => {
   //   });
   // });
 
-  describe("Unit testing using snapshots", () => {
-    it("Tests the snapshot", () => {
+  describe("Stack matches snapshot with", () => {
+    it("MyStack", () => {
       const app = Testing.app();
       const stack = new MyStack(app, "test");
 
@@ -42,6 +42,12 @@ describe("My CDKTF Application", () => {
 
       expect(Testing.synth(stack)).toMatchSnapshot();
     });
+
+    it('AutoScalingStack', () => {
+      const app = Testing.app();
+      const stack = new AutoScalingStack(app, "test", 'rgName');
+      expect(Testing.synth(stack)).toMatchSnapshot();
+    })
   })
   //   it("Tests a combination of resources", () => {
   //     expect(

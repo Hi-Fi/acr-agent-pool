@@ -27,7 +27,7 @@
   },
   "include": [
     "**/*.ts"
-  ],
+, "build_function.ts"  ],
   "exclude": [
     "node_modules",
     "cdktf.out"
