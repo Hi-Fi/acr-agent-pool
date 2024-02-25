@@ -3,6 +3,10 @@ Example how to scale Azure Container registry agent pool and save costs
 
 ## Directories
 
+### autoscaling-function
+
+Sample Azure function that can scale the agent pool according needs. Note that as Azure doesn't expose metrics related to pool queue status of event related to those, function has to run as scheduled and check status self.
+
 ### Docker
 
 Sample Dockerfile to trigger run towards agent pool. Triggering can be done with command (in `docker` directory):
