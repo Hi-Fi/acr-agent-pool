@@ -1,4 +1,5 @@
 import { ContainerRegistryManagementClient, Run } from "@azure/arm-containerregistry";
+import { InvocationContext } from "@azure/functions";
 
 
 export class AgentPoolHandler {
@@ -33,24 +34,34 @@ export class AgentPoolHandler {
         return runs;
     }
 
-    public async getNewPoolSize(): Promise<number> {
+    public async getNewPoolSize(logger: Console | InvocationContext = console): Promise<number> {
         const queue = this.client.agentPools.getQueueStatus(this.resourceGroupName, this.acrName, this.agentPoolName);
         const agents = this.client.agentPools.get(this.resourceGroupName, this.acrName, this.agentPoolName);
         const [queueResp, agentsResp] = await Promise.all([queue, agents]);
+        logger.debug(`${queueResp.count} items in queue and ${agentsResp.count} agents in service (status ${agentsResp.provisioningState}).`)
+
+        // If pool is not in ready state, updated will fail
+        if (agentsResp.provisioningState !== 'Succeeded') {
+            return undefined
+        }
         /**
          * We scale pool out if...
          * - There are items in queue and pool is empty
          * - There are more than `amountOfJobsPerAgent`     
          */
         if (queueResp.count > 0 && agentsResp.count === 0 || queueResp.count / agentsResp.count > this.amountOfJobsPerAgent) {
-            return agentsResp.count + 1;
+            const agentsNeeded = Math.ceil(queueResp.count / this.amountOfJobsPerAgent)
+            return agentsNeeded;
+        }
+
+        if (agentsResp.count === 0) {
+            return undefined;
         }
 
         const runs = await this.getRuns(this.client, this.resourceGroupName, this.acrName);
-
         const poolRuns = runs.filter(run => run.agentPoolName === this.agentPoolName);
         const runningJobs = poolRuns.filter(run => ['Running', 'Started'].includes(run.status));
-
+        logger.debug(`${poolRuns.length}/${runs.length} runs in pool ${this.agentPoolName}. ${runningJobs.length} of those running`);
         /**
          * If no jobs are running, we can in theory to scale things down. With some conditions...
          * - There's `coolDownMinutes` from previous scaling or last run end (whichever is closer)
@@ -58,22 +69,28 @@ export class AgentPoolHandler {
          */
         if (runningJobs.length === 0 && agentsResp.provisioningState === 'Succeeded') {
 
+            const currentDate = new Date().getTime();
+            const poolCooldown = poolRuns[0] ? currentDate - new Date(poolRuns[0]?.finishTime).getTime() : currentDate;
+            const agentCooldown = currentDate - new Date(agentsResp.systemData.lastModifiedAt).getTime();
             const cooldownElapsedInMs = Math.min(
                 // As there's no jobs running, finishTime should be present
-                new Date().getTime() - new Date(poolRuns[0].finishTime).getTime(),
-                new Date().getTime() - new Date(agentsResp.systemData.lastModifiedAt).getTime()
+                poolCooldown,
+                agentCooldown
             )
+
+            logger.debug(`Elapsed cooldown time: ${cooldownElapsedInMs}`);
             if (this.coolDownMinutes * 60 * 1000 < cooldownElapsedInMs) {
                 return agentsResp.count - 1;
             }
+            logger.debug(`Cooldown period ongoing, elapsed ${cooldownElapsedInMs}/${this.coolDownMinutes * 60 * 1000}`);
         }
 
         // We don't need to scale, so return undefined as scaling count.
         return undefined;
     }
 
-    public async scaleAgentPool(poolSize: number) {
-        console.log(`Scaling pool ${this.resourceGroupName}/${this.acrName}/${this.agentPoolName} to ${poolSize} instances`);
+    public async scaleAgentPool(poolSize: number, logger: Console | InvocationContext = console) {
+        logger.info(`Scaling pool ${this.resourceGroupName}/${this.acrName}/${this.agentPoolName} to ${poolSize} instances`);
         this.client.agentPools.beginUpdate(
             this.resourceGroupName,
             this.acrName,
