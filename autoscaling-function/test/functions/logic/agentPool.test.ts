@@ -1,6 +1,5 @@
 import { ContainerRegistryManagementClient } from "@azure/arm-containerregistry";
-import * as aapas from "../../src/functions/AcrAgentPoolAutoScaler";
-import { AgentPoolHandler } from "../../src/functions/logic/agentPool";
+import { AgentPoolHandler } from "../../../src/functions/logic/agentPool";
 
 const getAgentPoolMocks = (queueCount: number, agentCount: number, agentProvisioningState = 'Succeeded', agentLastModifiedAt = new Date().toISOString()) => (
     {
@@ -44,8 +43,10 @@ describe('getNewPoolSize', () => {
                 agentPools: getAgentPoolMocks(0, 1, 'Updating'),
             } as unknown as ContainerRegistryManagementClient;
             const agentPoolHandler = new AgentPoolHandler(client, '', '', 'testPool');
-            jest.spyOn(agentPoolHandler, 'getRuns').mockResolvedValue([])
+            const getRunsMock = jest.spyOn(agentPoolHandler, 'getRuns')
+            getRunsMock.mockResolvedValue([])
             expect(await agentPoolHandler.getNewPoolSize()).toBeUndefined()
+            expect(getRunsMock).not.toHaveBeenCalled();
         })
 
         test('cooldown period is on-going for agents', async () => {
@@ -95,7 +96,7 @@ describe('getNewPoolSize', () => {
                 agentPools: getAgentPoolMocks(20, 1),
             } as unknown as ContainerRegistryManagementClient;
             const agentPoolHandler = new AgentPoolHandler(client, '', '', '');
-            expect(await agentPoolHandler.getNewPoolSize()).toEqual(2);
+            expect(await agentPoolHandler.getNewPoolSize()).toEqual(4);
         })
 
         test('there are no agents and jobs waiting in queue', async () => {
@@ -122,6 +123,15 @@ describe('getNewPoolSize', () => {
                         finishTime: new Date(Date.now() - 600000)
                     }
                 ])
+                expect(await agentPoolHandler.getNewPoolSize()).toBe(4);
+            })
+
+            test('cooldown period for both pool is passed without any job runs', async () => {
+                const client = {
+                    agentPools: getAgentPoolMocks(0, 5, 'Succeeded', new Date(Date.now() - 600000).toISOString()),
+                } as unknown as ContainerRegistryManagementClient;
+                const agentPoolHandler = new AgentPoolHandler(client, '', '', 'testPool');
+                jest.spyOn(agentPoolHandler, 'getRuns').mockResolvedValue([])
                 expect(await agentPoolHandler.getNewPoolSize()).toBe(4);
             })
         })

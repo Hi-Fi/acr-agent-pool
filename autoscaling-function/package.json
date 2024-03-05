@@ -9,7 +9,8 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@azure/arm-containerregistry": "^10.1.0",
@@ -17,6 +18,7 @@
     "@azure/identity": "^4.0.1"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/node": "18.x",
     "azure-functions-core-tools": "^4.x",
     "rimraf": "^5.0.0",

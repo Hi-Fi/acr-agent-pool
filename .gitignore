@@ -11,6 +11,10 @@ tsconfig.tsbuildinfo
 !jest.config.js
 !setup.js
 
+# Azurite storage simulator files
+__azurite*
+__blobstorage__
+
 # Logs
 logs
 *.log

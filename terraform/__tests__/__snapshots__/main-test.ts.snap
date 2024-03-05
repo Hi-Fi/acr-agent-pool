@@ -1,6 +1,122 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`My CDKTF Application Unit testing using snapshots Tests the snapshot 1`] = `
+exports[`My CDKTF Application Stack matches snapshot with AutoScalingStack 1`] = `
+"{
+  "data": {
+    "archive_file": {
+      "functionBundle": {
+        "output_path": "functionApp.zip",
+        "source_dir": "../autoscaling-function/",
+        "type": "zip"
+      }
+    }
+  },
+  "locals": {
+    "local": "az webapp deployment source config-zip --resource-group rgName --name \${azurerm_linux_function_app.functionApp.name} --src \${data.archive_file.functionBundle.output_path}"
+  },
+  "provider": {
+    "archive": [
+      {
+      }
+    ],
+    "null": [
+      {
+      }
+    ]
+  },
+  "resource": {
+    "azurerm_linux_function_app": {
+      "functionApp": {
+        "app_settings": {
+          "AzureWebJobsDisableHomepage": "true",
+          "FUNCTIONS_WORKER_RUNTIME": "node",
+          "WEBSITE_RUN_FROM_PACKAGE": "1"
+        },
+        "identity": {
+          "identity_ids": [
+            "\${azurerm_user_assigned_identity.id.id}"
+          ],
+          "type": "UserAssigned"
+        },
+        "location": "westus2",
+        "name": "autoscaling-function",
+        "resource_group_name": "rgName",
+        "service_plan_id": "\${azurerm_service_plan.appServicePlan.id}",
+        "site_config": {
+          "use_32_bit_worker": false
+        }
+      }
+    },
+    "azurerm_role_assignment": {
+      "functionStorageAccess": {
+        "delegated_managed_identity_resource_id": "\${azurerm_user_assigned_identity.id.id}",
+        "principal_id": "\${azurerm_user_assigned_identity.id.principal_id}",
+        "role_definition_name": "Storage Blob Data Owner",
+        "scope": "\${azurerm_storage_account.storageAccount.id}"
+      }
+    },
+    "azurerm_service_plan": {
+      "appServicePlan": {
+        "location": "westus2",
+        "name": "as-app-service-plan",
+        "os_type": "Linux",
+        "resource_group_name": "rgName",
+        "sku_name": "Y1"
+      }
+    },
+    "azurerm_storage_account": {
+      "storageAccount": {
+        "account_replication_type": "LRS",
+        "account_tier": "Premium",
+        "location": "westus2",
+        "name": "autoscalefunction001",
+        "public_network_access_enabled": false,
+        "resource_group_name": "rgName",
+        "shared_access_key_enabled": false
+      }
+    },
+    "azurerm_user_assigned_identity": {
+      "id": {
+        "location": "westus2",
+        "name": "function-storage-access-id",
+        "resource_group_name": "rgName"
+      }
+    },
+    "null_resource": {
+      "deploy": {
+        "depends_on": [
+          "local.local"
+        ],
+        "provisioner": [
+          {
+            "local-exec": {
+              "command": "\${local.local}"
+            }
+          }
+        ],
+        "triggers": {
+          "bundleHash": "\${data.archive_file.functionBundle.output_sha256}",
+          "command": "\${local.local}"
+        }
+      }
+    }
+  },
+  "terraform": {
+    "required_providers": {
+      "archive": {
+        "source": "hashicorp/archive",
+        "version": "2.4.2"
+      },
+      "null": {
+        "source": "null",
+        "version": "3.2.2"
+      }
+    }
+  }
+}"
+`;
+
+exports[`My CDKTF Application Stack matches snapshot with MyStack 1`] = `
 "{
   "data": {
     "azurerm_resource_group": {
